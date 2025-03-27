@@ -1,10 +1,10 @@
 const mysql = require('mysql2');
 
 const db = mysql.createConnection({
-    host: 'localhost',      // Change if needed
-    user: 'root',          // Your MySQL username
-    password: '182001612',          // Your MySQL password (empty if none)
-    database: 'user_management' // The database we created
+    host: 'sql213.infinityfree.com',  // Database host (provided by InfinityFree)
+    user: 'if0_38614646',             // Database username (provided by InfinityFree)
+    password: '182001612',            // vPanel password (you provided)
+    database: 'f0_38614646_user_management'  // Database name (created on InfinityFree)
 });
 
 // Connect to MySQL
