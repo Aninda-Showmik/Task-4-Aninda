@@ -8,7 +8,7 @@ const db = require('./db'); // Importing the db.js file
 const authenticateToken = require('./middleware'); // Importing the middleware for token authentication
 
 const app = express();
-const port = 5000;
+const port = 3306;
 
 // Middleware to parse incoming JSON requests
 app.use(express.json());
