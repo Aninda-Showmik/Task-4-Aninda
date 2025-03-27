@@ -5,7 +5,6 @@ const db = mysql.createConnection({
     user: '4610662_userdetails',      // Database username (provided by AwardSpace)
     password: '182001612@Ani',        // Updated password
     database: '4610662_userdetails'   // Database name (created on AwardSpace)
-    connectTimeout: 10000 
 });
 // Connect to MySQL
 db.connect((err) => {
