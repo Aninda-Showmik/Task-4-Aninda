@@ -1,12 +1,11 @@
 const mysql = require('mysql2');
 
 const db = mysql.createConnection({
-    host: 'sql213.infinityfree.com',  // Database host (provided by InfinityFree)
-    user: 'if0_38614646',             // Database username (provided by InfinityFree)
-    password: '182001612',            // vPanel password (you provided)
-    database: 'f0_38614646_user_management'  // Database name (created on InfinityFree)
+    host: 'fdb1029.awardspace.net',  // Database host (provided by AwardSpace)
+    user: '4610662_userdetails',      // Database username (provided by AwardSpace)
+    password: 'your_password_here',   // Replace with your actual password
+    database: '4610662_userdetails'   // Database name (created on AwardSpace)
 });
-
 // Connect to MySQL
 db.connect((err) => {
     if (err) {
