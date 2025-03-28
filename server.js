@@ -9,7 +9,7 @@ const authenticateToken = require('./middleware'); // Importing the middleware f
 const path = require('path'); // Add this line
 
 const app = express();
-const port = process.env.PORT || 5000; // Use the environment port or default to 5000
+const port = process.env.DB_PORT || 5000; // Use the environment port or default to 5000
 
 
 // Middleware to parse incoming JSON requests
