@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('./db'); // Importing the db.js file
 const authenticateToken = require('./middleware'); // Importing the middleware for token authentication
+const path = require('path'); // Add this line
 
 const app = express();
 const port = 5000;
