@@ -1,27 +1,10 @@
-// Show login form
-function showLoginForm() {
-    document.getElementById('login-form').style.display = 'block';
-    document.getElementById('register-form').style.display = 'none';
-    document.getElementById('login-email').value = '';
-    document.getElementById('login-password').value = '';
-}
-
-// Show register form
-function showRegisterForm() {
-    document.getElementById('register-form').style.display = 'block';
-    document.getElementById('login-form').style.display = 'none';
-    document.getElementById('register-name').value = '';
-    document.getElementById('register-email').value = '';
-    document.getElementById('register-password').value = '';
-}
-
 // Register function
 function register() {
     const name = document.getElementById('register-name').value;
     const email = document.getElementById('register-email').value;
     const password = document.getElementById('register-password').value;
 
-    fetch('http://localhost:5000/register', {
+    fetch('https://task-4-aninda.onrender.com/register', {  // Change here
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -36,7 +19,6 @@ function register() {
         } else {
             alert(data.message);
             showLoginForm();
-
         }
     })
     .catch((error) => {
@@ -50,7 +32,7 @@ function login() {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
 
-    fetch('http://localhost:5000/login', {
+    fetch('https://task-4-aninda.onrender.com/login', {  // Change here
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -64,11 +46,9 @@ function login() {
             document.getElementById('auth-section').style.display = 'none';
             document.getElementById('user-management-section').style.display = 'block';
             fetchUsers();
-
         } else {
             alert(data.error);
             showLoginForm();
-            //location.reload(true);
         }
     })
     .catch((error) => {
@@ -86,7 +66,7 @@ function fetchUsers() {
         return;
     }
 
-    fetch('http://localhost:5000/users', {
+    fetch('https://task-4-aninda.onrender.com/users', {  // Change here
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -128,113 +108,4 @@ function fetchUsers() {
     .catch((error) => {
         console.error('Error fetching users:', error);
     });
-}
-
-// Select all users checkboxes
-function selectAll() {
-    const checkboxes = document.querySelectorAll('.user-checkbox');
-    const selectAllCheckbox = document.getElementById('select-all');
-    checkboxes.forEach((checkbox) => {
-        checkbox.checked = selectAllCheckbox.checked;
-    });
-}
-
-document.getElementById('block-btn').onclick = function() {
-    let selectedUsers = getSelectedUsers();
-    if (selectedUsers.length > 0) {
-        fetch('http://localhost:5000/users/block', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
-            },
-            body: JSON.stringify({ userIds: selectedUsers }),
-        })
-        .then((response) => response.json())
-        .then((data) => {
-            alert(data.message);
-            if (data.logout) {
-                localStorage.removeItem('auth-token');
-                document.getElementById('user-management-section').style.display = 'none';
-                document.getElementById('auth-section').style.display = 'block';
-                showLoginForm();
-                location.reload();
-            } else {
-                fetchUsers();
-            }
-        })
-        .catch((error) => {
-            alert('Error blocking users');
-            console.error(error);
-        });
-    } else {
-        alert('No users selected');
-    }
-};
-
-// Unblock selected users
-document.getElementById('unblock-btn').onclick = function() {
-    let selectedUsers = getSelectedUsers();
-    if (selectedUsers.length > 0) {
-        fetch('http://localhost:5000/users/unblock', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
-            },
-            body: JSON.stringify({ userIds: selectedUsers }),
-        })
-        .then((response) => response.json())
-        .then((data) => {
-            alert(data.message);
-            fetchUsers();
-        })
-        .catch((error) => {
-            alert('Error unblocking users');
-            console.error(error);
-        });
-    } else {
-        alert('No users selected');
-    }
-};
-
-document.getElementById('delete-btn').onclick = function() {
-    let selectedUsers = getSelectedUsers();
-    if (selectedUsers.length > 0) {
-        fetch('http://localhost:5000/users/delete', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
-            },
-            body: JSON.stringify({ userIds: selectedUsers }),
-        })
-        .then((response) => response.json())
-        .then((data) => {
-            alert(data.message);
-            fetchUsers();
-        })
-        .catch((error) => {
-            alert('Error deleting users');
-            console.error(error);
-        });
-    } else {
-        alert('No users selected');
-    }
-};
-document.getElementById('logout-btn').addEventListener('click', function() {
-    localStorage.removeItem('auth-token');
-    document.getElementById('user-management-section').style.display = 'none';
-    document.getElementById('auth-section').style.display = 'block';
-    showLoginForm();
-    location.reload();
-});
-// Get selected user IDs
-function getSelectedUsers() {
-    const checkboxes = document.querySelectorAll('.user-checkbox:checked');
-    let selectedUsers = [];
-    checkboxes.forEach((checkbox) => {
-        selectedUsers.push(checkbox.getAttribute('data-id'));
-    });
-    return selectedUsers;
 }
