@@ -16,7 +16,6 @@ app.use(express.json());
 // Enable CORS for all domains (you can customize this later)
 app.use(cors());
 
-
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html')); // Ensure index.html is in the root
 });
@@ -30,25 +29,25 @@ app.post('/register', async (req, res) => {
         return res.status(400).json({ error: 'Please provide all required fields' });
     }
 
-    // Check if email already exists
-    db.query('SELECT * FROM users WHERE email = ?', [email], async (err, result) => {
+    // Check if email already exists in PostgreSQL
+    db.query('SELECT * FROM users WHERE email = $1', [email], async (err, result) => {
         if (err) {
-            console.error('Database error:', err); // Log the error
+            console.error('Database error:', err);
             return res.status(500).json({ error: 'Database error' });
         }
 
         // If result is not empty, it means the email already exists
-        if (result.length > 0) {
-            return res.status(400).json({ error: 'Email already exists' }); // Corrected error message
+        if (result.rows.length > 0) {
+            return res.status(400).json({ error: 'Email already exists' });
         }
 
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create a new user
-        db.query('INSERT INTO users (name, email, password) VALUES (?, ?, ?)', [name, email, hashedPassword], (err) => {
+        db.query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3)', [name, email, hashedPassword], (err) => {
             if (err) {
-                console.error('Error creating user:', err); // Log the error
+                console.error('Error creating user:', err);
                 return res.status(500).json({ error: 'Error creating user' });
             }
 
@@ -66,17 +65,17 @@ app.post('/login', (req, res) => {
         return res.status(400).json({ error: 'Please provide both email and password' });
     }
 
-    // Check if the user exists
-    db.query('SELECT * FROM users WHERE email = ?', [email], async (err, result) => {
+    // Check if the user exists in PostgreSQL
+    db.query('SELECT * FROM users WHERE email = $1', [email], async (err, result) => {
         if (err) {
             console.error('Database error:', err);
             return res.status(500).json({ error: 'Database error' });
         }
-        if (result.length === 0) {
+        if (result.rows.length === 0) {
             return res.status(400).json({ error: 'User not found' });
         }
 
-        const user = result[0];
+        const user = result.rows[0];
 
         // Check if the user is blocked
         if (user.status === 'blocked') {
@@ -93,7 +92,7 @@ app.post('/login', (req, res) => {
         const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'Nataraz', { expiresIn: '1h' });
 
         // Update last login timestamp
-        db.query('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id], (updateErr) => {
+        db.query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id], (updateErr) => {
             if (updateErr) console.error('Failed to update last login:', updateErr);
         });
 
@@ -105,56 +104,53 @@ app.post('/login', (req, res) => {
 function checkUserStatus(req, res, next) {
     const userId = req.user.userId;
 
-    db.query('SELECT * FROM users WHERE id = ?', [userId], (err, result) => {
+    db.query('SELECT * FROM users WHERE id = $1', [userId], (err, result) => {
         if (err) {
             console.error('Database error:', err);
             return res.status(500).json({ error: 'Database error' });
         }
 
-        if (result.length === 0) {
+        if (result.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        const user = result[0];
+        const user = result.rows[0];
 
         if (user.status === 'blocked') {
-            return res.status(403).json({ error: 'User is blocked' }); // 🚀 Stops execution
+            return res.status(403).json({ error: 'User is blocked' });
         }
 
-        next(); // ✅ Only proceeds if the user is NOT blocked
+        next();
     });
-
-    console.log('Authenticated user ID:', req.user.userId);
 }
 
 // Route to fetch users
 app.get('/users', authenticateToken, checkUserStatus, (req, res) => {
     db.query('SELECT * FROM users ORDER BY last_login DESC', (err, results) => {
         if (err) {
-            console.error('Database error:', err); // Log the error
+            console.error('Database error:', err);
             return res.status(500).json({ error: 'Database error' });
         }
-        res.json(results); // Send the list of users
+        res.json(results.rows); // Send the list of users
     });
 });
 
 // Route to block users
 app.post('/users/block', authenticateToken, checkUserStatus, (req, res) => {
     const { userIds } = req.body; // Array of user IDs to block
-    const loggedInUserId = req.user.userId; // Get the logged-in user's ID
+    const loggedInUserId = req.user.userId;
 
     // Check if userIds is empty
     if (!userIds || userIds.length === 0) {
         return res.status(400).json({ error: 'No users selected' });
     }
 
-    db.query('UPDATE users SET status = "blocked" WHERE id IN (?)', [userIds], (err) => {
+    db.query('UPDATE users SET status = $1 WHERE id = ANY($2)', ['blocked', userIds], (err) => {
         if (err) {
             console.error('Failed to block users:', err);
             return res.status(500).json({ error: 'Failed to block users' });
         }
 
-        // 🚀 If the logged-in user is in the blocked list, send a logout response
         if (userIds.includes(loggedInUserId)) {
             return res.status(200).json({ message: 'You have been blocked and logged out', logout: true });
         }
@@ -165,17 +161,15 @@ app.post('/users/block', authenticateToken, checkUserStatus, (req, res) => {
 
 // Route to unblock users
 app.post('/users/unblock', authenticateToken, checkUserStatus, (req, res) => {
-    const { userIds } = req.body; // Array of selected user IDs to unblock
+    const { userIds } = req.body;
 
-    // Validate if userIds is a non-empty array
     if (!Array.isArray(userIds) || userIds.length === 0) {
         return res.status(400).json({ error: 'No valid user IDs provided for unblocking' });
     }
 
-    // Perform the status update
-    db.query('UPDATE users SET status = "active" WHERE id IN (?)', [userIds], (err) => {
+    db.query('UPDATE users SET status = $1 WHERE id = ANY($2)', ['active', userIds], (err) => {
         if (err) {
-            console.error('Failed to unblock users:', err); // Log the error
+            console.error('Failed to unblock users:', err);
             return res.status(500).json({ error: 'Failed to unblock users' });
         }
         res.status(200).json({ message: 'Users unblocked successfully' });
@@ -184,12 +178,10 @@ app.post('/users/unblock', authenticateToken, checkUserStatus, (req, res) => {
 
 // Route to delete users
 app.post('/users/delete', authenticateToken, checkUserStatus, (req, res) => {
-    const { userIds } = req.body; // Array of selected user IDs to delete
-    console.log('Received user IDs to delete:', userIds); // Log the received user IDs
+    const { userIds } = req.body;
 
     if (userIds && userIds.length > 0) {
-        // Delete users from the database using DELETE query
-        db.query('DELETE FROM users WHERE id IN (?)', [userIds], (err, result) => {
+        db.query('DELETE FROM users WHERE id = ANY($1)', [userIds], (err, result) => {
             if (err) {
                 console.error('Error deleting users:', err);
                 return res.status(500).json({ error: 'Error deleting users' });
