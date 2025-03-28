@@ -18,9 +18,7 @@ app.use(express.json());
 // Enable CORS for all domains (you can customize this later)
 app.use(cors());
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html')); // Ensure index.html is in the root
-});
+
 
 // Registration route
 app.post('/register', async (req, res) => {
