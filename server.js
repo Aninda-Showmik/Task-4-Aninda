@@ -16,9 +16,9 @@ app.use(express.json());
 // Enable CORS for all domains (you can customize this later)
 app.use(cors());
 
-// Root route to handle "Cannot GET /"
+
 app.get('/', (req, res) => {
-    res.send('Welcome to the API!');
+    res.sendFile(path.join(__dirname, 'index.html')); // Ensure index.html is in the root
 });
 
 // Registration route
