@@ -1,10 +1,30 @@
+// Replace with the new remote server URL
+const baseUrl = 'https://task-4-aninda.onrender.com'; // Your new base URL
+
+// Show login form
+function showLoginForm() {
+    document.getElementById('login-form').style.display = 'block';
+    document.getElementById('register-form').style.display = 'none';
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-password').value = '';
+}
+
+// Show register form
+function showRegisterForm() {
+    document.getElementById('register-form').style.display = 'block';
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('register-name').value = '';
+    document.getElementById('register-email').value = '';
+    document.getElementById('register-password').value = '';
+}
+
 // Register function
 function register() {
     const name = document.getElementById('register-name').value;
     const email = document.getElementById('register-email').value;
     const password = document.getElementById('register-password').value;
 
-    fetch('https://task-4-aninda.onrender.com/register', {  // Change here
+    fetch(`${baseUrl}/register`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -32,7 +52,7 @@ function login() {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
 
-    fetch('https://task-4-aninda.onrender.com/login', {  // Change here
+    fetch(`${baseUrl}/login`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -66,7 +86,7 @@ function fetchUsers() {
         return;
     }
 
-    fetch('https://task-4-aninda.onrender.com/users', {  // Change here
+    fetch(`${baseUrl}/users`, {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${token}`,
@@ -77,7 +97,7 @@ function fetchUsers() {
             localStorage.removeItem('auth-token');
             alert('Your account has been blocked. Please log in again.');
             showLoginForm();
-            location.reload(true);
+            location.reload();
             return null;
         }
         return response.json();
@@ -109,3 +129,117 @@ function fetchUsers() {
         console.error('Error fetching users:', error);
     });
 }
+
+// Select all users checkboxes
+function selectAll() {
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+    const selectAllCheckbox = document.getElementById('select-all');
+    checkboxes.forEach((checkbox) => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+}
+
+// Get selected user IDs
+function getSelectedUsers() {
+    const checkboxes = document.querySelectorAll('.user-checkbox:checked');
+    let selectedUsers = [];
+    checkboxes.forEach((checkbox) => {
+        selectedUsers.push(checkbox.getAttribute('data-id'));
+    });
+    return selectedUsers;
+}
+
+// Block selected users
+document.getElementById('block-btn').addEventListener('click', function() {
+    let selectedUsers = getSelectedUsers();
+    if (selectedUsers.length > 0) {
+        fetch(`${baseUrl}/users/block`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
+            },
+            body: JSON.stringify({ userIds: selectedUsers }),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            alert(data.message);
+            if (data.logout) {
+                localStorage.removeItem('auth-token');
+                document.getElementById('user-management-section').style.display = 'none';
+                document.getElementById('auth-section').style.display = 'block';
+                showLoginForm();
+                location.reload();
+            } else {
+                fetchUsers();
+            }
+        })
+        .catch((error) => {
+            alert('Error blocking users');
+            console.error(error);
+        });
+    } else {
+        alert('No users selected');
+    }
+});
+
+// Unblock selected users
+document.getElementById('unblock-btn').addEventListener('click', function() {
+    let selectedUsers = getSelectedUsers();
+    if (selectedUsers.length > 0) {
+        fetch(`${baseUrl}/users/unblock`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
+            },
+            body: JSON.stringify({ userIds: selectedUsers }),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            alert(data.message);
+            fetchUsers();
+        })
+        .catch((error) => {
+            alert('Error unblocking users');
+            console.error(error);
+        });
+    } else {
+        alert('No users selected');
+    }
+});
+
+// Delete selected users
+document.getElementById('delete-btn').addEventListener('click', function() {
+    let selectedUsers = getSelectedUsers();
+    if (selectedUsers.length > 0) {
+        fetch(`${baseUrl}/users/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
+            },
+            body: JSON.stringify({ userIds: selectedUsers }),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            alert(data.message);
+            fetchUsers();
+        })
+        .catch((error) => {
+            alert('Error deleting users');
+            console.error(error);
+        });
+    } else {
+        alert('No users selected');
+    }
+});
+
+// Logout function
+document.getElementById('logout-btn').addEventListener('click', function() {
+    localStorage.removeItem('auth-token');
+    document.getElementById('user-management-section').style.display = 'none';
+    document.getElementById('auth-section').style.display = 'block';
+    showLoginForm();
+    location.reload();
+});
