@@ -16,6 +16,12 @@ app.use(express.json());
 // Enable CORS for all domains (you can customize this later)
 app.use(cors());
 
+// Root route to handle "Cannot GET /"
+app.get('/', (req, res) => {
+    res.send('Welcome to the API!');
+});
+
+// Registration route
 app.post('/register', async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -132,6 +138,7 @@ app.get('/users', authenticateToken, checkUserStatus, (req, res) => {
     });
 });
 
+// Route to block users
 app.post('/users/block', authenticateToken, checkUserStatus, (req, res) => {
     const { userIds } = req.body; // Array of user IDs to block
     const loggedInUserId = req.user.userId; // Get the logged-in user's ID
